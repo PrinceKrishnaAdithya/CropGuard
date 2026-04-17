@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crop Disease Detector</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #020617);
+            color: white;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #1e293b;
+            color: white;
+        }
+
+        button {
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            background: #22c55e;
+            border: none;
+            border-radius: 10px;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #16a34a;
+        }
+
+        #preview {
+            margin-top: 15px;
+            max-width: 100%;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-card {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .loading {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🌿 AI Crop Detector</h1>
+
+    <!-- 🔥 MODEL SELECT -->
+    <select id="modelSelect">
+        <option value="baseline">Baseline Model</option>
+        <option value="gan">GAN Model</option>
+    </select>
+
+    <input type="file" id="fileInput" accept="image/*" onchange="previewImage()">
+
+    <img id="preview"/>
+
+    <button onclick="upload()">Predict</button>
+
+    <div class="loading" id="loading">⏳ Processing...</div>
+
+    <div class="result-card" id="resultCard" style="display:none;">
+        <div id="result"></div>
+        <div id="confidence"></div>
+        <div id="modelUsed"></div>
+    </div>
+</div>
+
+<script>
+    function previewImage() {
+        const file = document.getElementById("fileInput").files[0];
+        const preview = document.getElementById("preview");
+
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = "block";
+        }
+    }
+
+    async function upload() {
+        const file = document.getElementById("fileInput").files[0];
+        const model = document.getElementById("modelSelect").value;
+
+        if (!file) {
+            alert("Upload an image!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("model", model);
+
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("resultCard").style.display = "none";
+
+        const res = await fetch("/predict", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("resultCard").style.display = "block";
+
+        document.getElementById("result").innerText = "🌱 Prediction: " + data.prediction;
+        document.getElementById("confidence").innerText = "📊 Confidence: " + data.confidence.toFixed(2) + "%";
+        document.getElementById("modelUsed").innerText = "🤖 Model Used: " + data.model_used;
+    }
+</script>
+
+</body>
+</html>
